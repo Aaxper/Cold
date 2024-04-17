@@ -22,6 +22,9 @@
 "("	{ return LPAREN; }
 ")"	{ return RPAREN; }
 
+"true" { yylval.boolType = 1; return BOOL; }
+"false" { yylval.boolType = 0; return BOOL; }
+
 [ \t];
 \n { return NEWLINE; }
 

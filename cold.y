@@ -21,7 +21,7 @@ struct AST_EXPR {
         AST_DIV
     } tag;
     union {
-        struct AST_VALUE { union VAL_TYPES { int intVal; float floatVal; char *strVal; } TYPE; int typ; } AST_VALUE;
+        struct AST_VALUE { union VAL_TYPES { int intVal; float floatVal; char *strVal; _Bool boolVal; } TYPE; int typ; } AST_VALUE;
         struct AST_ADD { struct AST_EXPR *left; struct AST_EXPR *right; } AST_ADD;
         struct AST_SUB { struct AST_EXPR *left; struct AST_EXPR *right; } AST_SUB;
         struct AST_MUL { struct AST_EXPR *left; struct AST_EXPR *right; } AST_MUL;
@@ -44,6 +44,8 @@ void ast_print(struct AST_EXPR *ptr) {
             printf("%f", ast.data.AST_VALUE.TYPE.floatVal);
         } else if (ast.data.AST_VALUE.typ == 2) {
             printf("%s", ast.data.AST_VALUE.TYPE.strVal);
+        } else if (ast.data.AST_VALUE.typ == 3) {
+            printf(ast.data.AST_VALUE.TYPE.boolVal ? "true" : "false");
         }
         return;
     case AST_ADD: {
@@ -91,6 +93,7 @@ void ast_print(struct AST_EXPR *ptr) {
 	int intType;
 	float floatType;
     char *strType;
+    _Bool boolType;
     struct AST_EXPR *exprType;
 }
 
@@ -99,6 +102,7 @@ void ast_print(struct AST_EXPR *ptr) {
 %token<intType> INT
 %token<floatType> FLOAT
 %token<strType> STRING
+%token<boolType> BOOL
 %token ADD SUB MUL DIV LPAREN RPAREN
 %token NEWLINE
 %left ADD SUB
@@ -123,6 +127,7 @@ line: NEWLINE
 expr: INT { union VAL_TYPES x; x.intVal = $1; $$ = NEW_EXPR(AST_VALUE, x, 0); }
     | FLOAT { union VAL_TYPES x; x.floatVal = $1; $$ = NEW_EXPR(AST_VALUE, x, 1); }
     | STRING { union VAL_TYPES x; x.strVal = $1; $$ = NEW_EXPR(AST_VALUE, x, 2); }
+    | BOOL { union VAL_TYPES x; x.boolVal = $1; $$ = NEW_EXPR(AST_VALUE, x, 3); }
 	| expr ADD expr	{ $$ = NEW_EXPR(AST_ADD, $1, $3); }
 	| expr SUB expr	{ $$ = NEW_EXPR(AST_SUB, $1, $3); }
 	| expr MUL expr	{ $$ = NEW_EXPR(AST_MUL, $1, $3); }
