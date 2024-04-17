@@ -3,16 +3,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define NEW_EXPR(tag, ...) \
-  new_expr((struct AST_EXPR){tag, {.tag=(struct tag){__VA_ARGS__}}})
-
 extern int yylex();
 extern int yyparse();
 extern FILE* yyin;
 
 void yyerror(const char* s);
 
+// Node for an expression tree
 struct AST_EXPR {
+    // Every type for an AST_EXPR
     enum {
         AST_VALUE,
         AST_ADD,
@@ -20,31 +19,40 @@ struct AST_EXPR {
         AST_MUL,
         AST_DIV
     } tag;
+    // Data for each type of expression node
     union {
-        struct AST_VALUE { union VAL_TYPES { int intVal; float floatVal; char *strVal; _Bool boolVal; } TYPE; int typ; } AST_VALUE;
+        // Constant value
+        struct AST_VALUE { /* Types of constant */ union VAL_TYPES { int intVal; float floatVal; char *strVal; _Bool boolVal; } TYPE; /* Stores the type used in the union */ int type; } AST_VALUE;
+        // Expression nodes
         struct AST_ADD { struct AST_EXPR *left; struct AST_EXPR *right; } AST_ADD;
         struct AST_SUB { struct AST_EXPR *left; struct AST_EXPR *right; } AST_SUB;
         struct AST_MUL { struct AST_EXPR *left; struct AST_EXPR *right; } AST_MUL;
         struct AST_DIV { struct AST_EXPR *left; struct AST_EXPR *right; } AST_DIV;
     } data;
 };
+// Allocate an expression node on the heap and returns a pointer to it
 struct AST_EXPR *new_expr(struct AST_EXPR ast) {
     struct AST_EXPR *ptr = malloc(sizeof(struct AST_EXPR));
-    if (ptr) *ptr = ast;
+    if (ptr) 
+        *ptr = ast;
     return ptr;
 }
+// Slightly easier use of new_expr()
+#define NEW_EXPR(tag, ...) \
+    new_expr((struct AST_EXPR){tag, {.tag=(struct tag){__VA_ARGS__}}})
 
+// Print an AST
 void ast_print(struct AST_EXPR *ptr) {
     struct AST_EXPR ast = *ptr;
     switch (ast.tag) {
     case AST_VALUE:
-        if (ast.data.AST_VALUE.typ == 0) {
+        if (ast.data.AST_VALUE.type == 0) {
             printf("%d", ast.data.AST_VALUE.TYPE.intVal);
-        } else if (ast.data.AST_VALUE.typ == 1) {
+        } else if (ast.data.AST_VALUE.type == 1) {
             printf("%f", ast.data.AST_VALUE.TYPE.floatVal);
-        } else if (ast.data.AST_VALUE.typ == 2) {
+        } else if (ast.data.AST_VALUE.type == 2) {
             printf("%s", ast.data.AST_VALUE.TYPE.strVal);
-        } else if (ast.data.AST_VALUE.typ == 3) {
+        } else if (ast.data.AST_VALUE.type == 3) {
             printf(ast.data.AST_VALUE.TYPE.boolVal ? "true" : "false");
         }
         return;
@@ -136,16 +144,6 @@ expr: INT { union VAL_TYPES x; x.intVal = $1; $$ = NEW_EXPR(AST_VALUE, x, 0); }
 ;
 
 %%
-
-int main() {
-	yyin = fopen("example.cold", "r");
-
-	do {
-		yyparse();
-	} while(!feof(yyin));
-
-	return 0;
-}
 
 void yyerror(const char* s) {
 	fprintf(stderr, "Error: %s\n", s);

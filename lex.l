@@ -5,7 +5,7 @@
 
 #define YY_DECL int yylex()
 
-#include "cold.tab.h"
+#include "parse.tab.h"
 
 %}
 
