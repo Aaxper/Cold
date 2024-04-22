@@ -1,122 +1,35 @@
-%{
+%require "3.2"
 
-#include <stdio.h>
-#include <stdlib.h>
+%code requires {
+    #include <iostream>
+    #include "ast.h"
 
-extern int yylex();
-extern int yyparse();
-extern FILE* yyin;
-
-void yyerror(const char* s);
-
-// Node for an expression tree
-struct AST_EXPR {
-    // Every type for an AST_EXPR
-    enum {
-        AST_VALUE,
-        AST_ADD,
-        AST_SUB,
-        AST_MUL,
-        AST_DIV
-    } tag;
-    // Data for each type of expression node
-    union {
-        // Constant value
-        struct AST_VALUE { /* Types of constant */ union VAL_TYPES { int intVal; float floatVal; char *strVal; _Bool boolVal; } TYPE; /* Stores the type used in the union */ int type; } AST_VALUE;
-        // Expression nodes
-        struct AST_ADD { struct AST_EXPR *left; struct AST_EXPR *right; } AST_ADD;
-        struct AST_SUB { struct AST_EXPR *left; struct AST_EXPR *right; } AST_SUB;
-        struct AST_MUL { struct AST_EXPR *left; struct AST_EXPR *right; } AST_MUL;
-        struct AST_DIV { struct AST_EXPR *left; struct AST_EXPR *right; } AST_DIV;
-    } data;
-};
-// Allocate an expression node on the heap and returns a pointer to it
-struct AST_EXPR *new_expr(struct AST_EXPR ast) {
-    struct AST_EXPR *ptr = malloc(sizeof(struct AST_EXPR));
-    if (ptr) 
-        *ptr = ast;
-    return ptr;
+    extern int yylex();
+    extern int yyparse();
+    void yyerror(const char* s);
 }
-// Slightly easier use of new_expr()
-#define NEW_EXPR(tag, ...) \
-    new_expr((struct AST_EXPR){tag, {.tag=(struct tag){__VA_ARGS__}}})
-
-// Print an AST
-void ast_print(struct AST_EXPR *ptr) {
-    struct AST_EXPR ast = *ptr;
-    switch (ast.tag) {
-    case AST_VALUE:
-        if (ast.data.AST_VALUE.type == 0) {
-            printf("%d", ast.data.AST_VALUE.TYPE.intVal);
-        } else if (ast.data.AST_VALUE.type == 1) {
-            printf("%f", ast.data.AST_VALUE.TYPE.floatVal);
-        } else if (ast.data.AST_VALUE.type == 2) {
-            printf("%s", ast.data.AST_VALUE.TYPE.strVal);
-        } else if (ast.data.AST_VALUE.type == 3) {
-            printf(ast.data.AST_VALUE.TYPE.boolVal ? "true" : "false");
-        }
-        return;
-    case AST_ADD: {
-        struct AST_ADD data = ast.data.AST_ADD;
-        printf("(");
-        ast_print(data.left);
-        printf(" + ");
-        ast_print(data.right);
-        printf(")");
-        return;
-    }
-    case AST_SUB: {
-        struct AST_SUB data = ast.data.AST_SUB;
-        printf("(");
-        ast_print(data.left);
-        printf(" - ");
-        ast_print(data.right);
-        printf(")");
-        return;
-    }
-    case AST_MUL: {
-        struct AST_MUL data = ast.data.AST_MUL;
-        printf("(");
-        ast_print(data.left);
-        printf(" * ");
-        ast_print(data.right);
-        printf(")");
-        return;
-    }
-    case AST_DIV: {
-        struct AST_DIV data = ast.data.AST_DIV;
-        printf("(");
-        ast_print(data.left);
-        printf(" / ");
-        ast_print(data.right);
-        printf(")");
-        return;
-    }
-  }
-}
-
-%}
 
 %union {
-	int intType;
-	float floatType;
-    char *strType;
-    _Bool boolType;
-    struct AST_EXPR *exprType;
+    int intType;
+    float floatType;
+    std::string *strType;
+    bool boolType;
+    Node *nodeType;
+    Expression *exprType;
 }
 
 %define parse.error verbose
 
-%token<intType> INT
-%token<floatType> FLOAT
-%token<strType> STRING
+%token<intType> INT 
+%token<floatType> FLOAT 
+%token<strType> STRING 
 %token<boolType> BOOL
 %token ADD SUB MUL DIV LPAREN RPAREN
 %token NEWLINE
 %left ADD SUB
 %left MUL DIV
 
-%type<exprType> expr
+%type<exprType> expr line
 
 %start result
 
@@ -127,25 +40,26 @@ result: lines
 
 lines: /* empty */
     | lines line
-
-line: NEWLINE
-    | expr NEWLINE { ast_print($1); printf("\n"); }
 ;
 
-expr: INT { union VAL_TYPES x; x.intVal = $1; $$ = NEW_EXPR(AST_VALUE, x, 0); }
-    | FLOAT { union VAL_TYPES x; x.floatVal = $1; $$ = NEW_EXPR(AST_VALUE, x, 1); }
-    | STRING { union VAL_TYPES x; x.strVal = $1; $$ = NEW_EXPR(AST_VALUE, x, 2); }
-    | BOOL { union VAL_TYPES x; x.boolVal = $1; $$ = NEW_EXPR(AST_VALUE, x, 3); }
-	| expr ADD expr	{ $$ = NEW_EXPR(AST_ADD, $1, $3); }
-	| expr SUB expr	{ $$ = NEW_EXPR(AST_SUB, $1, $3); }
-	| expr MUL expr	{ $$ = NEW_EXPR(AST_MUL, $1, $3); }
-    | expr DIV expr	{ $$ = NEW_EXPR(AST_DIV, $1, $3); }
+line: NEWLINE { $$ = nullptr; }
+    | expr NEWLINE { std::cout << $1->str << "\n"; $$ = $1; }
+;
+
+expr: INT { $$ = new Int{ $1 }; }
+    | FLOAT { $$ = new Float{ $1 }; }
+    | STRING { $$ = new String{ $1 }; }
+    | BOOL { $$ = new Bool{ $1 }; }
+	| expr ADD expr	{ $$ = new BinOp{ $1, $3, '+' }; }
+	| expr SUB expr	{ $$ = new BinOp{ $1, $3, '-' }; }
+	| expr MUL expr	{ $$ = new BinOp{ $1, $3, '*' }; }
+    | expr DIV expr	{ $$ = new BinOp{ $1, $3, '/' }; }
 	| LPAREN expr RPAREN { $$ = $2; }
 ;
 
 %%
 
 void yyerror(const char* s) {
-	fprintf(stderr, "Error: %s\n", s);
+	std::printf("Error: %s\n", s);
 	exit(1);
 }

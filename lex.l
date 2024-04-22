@@ -1,8 +1,6 @@
 %option noyywrap
 
 %{
-#include <stdio.h>
-
 #define YY_DECL int yylex()
 
 #include "parse.tab.h"
@@ -13,7 +11,9 @@
 
 [0-9]+\.[0-9]* { yylval.floatType = atof(yytext); return FLOAT; }
 [0-9]+ { yylval.intType = atoi(yytext); return INT; }
-\"[^\"]*\" { yylval.strType = yytext; size_t len = strlen(yylval.strType); yylval.strType[len - 1] = '\0'; memmove(yylval.strType, yylval.strType + 1, len - 1); return STRING; }
+\"[^\"]*\" { std::string *str = new std::string; *str = yytext; *str = str->substr(1, str->length()-2); yylval.strType = str; return STRING; }
+
+#[^\n]* {}
 
 "+" { return ADD; }
 "-"	{ return SUB; }
@@ -28,6 +28,6 @@
 [ \t];
 \n { return NEWLINE; }
 
-<<EOF>> { static int once = 0; return (once = !once) ? NEWLINE : 0; }
+<<EOF>> { static int once = 0; if (once == 0) { once = 1; return NEWLINE; } return 0; }
 
 %%
