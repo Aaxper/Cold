@@ -3,8 +3,7 @@
 %{
 #define YY_DECL int yylex()
 
-#include "parse.tab.h"
-
+#include "parse.tab.hpp"
 %}
 
 %%
@@ -21,9 +20,12 @@
 "/"	{ return DIV; }
 "("	{ return LPAREN; }
 ")"	{ return RPAREN; }
+"="	{ return EQUAL; }
 
 "true" { yylval.boolType = 1; return BOOL; }
 "false" { yylval.boolType = 0; return BOOL; }
+
+[a-zA-Z][a-zA-Z0-9]* { std::string *str = new std::string; *str = yytext; yylval.strType = str; return ID; }
 
 [ \t];
 \n { return NEWLINE; }
