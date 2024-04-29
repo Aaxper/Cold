@@ -1,7 +1,7 @@
 #include <cstring>
 #include <iostream>
 #include <fstream>
-#include "parse.tab.hpp"
+#include "parse.tab.h"
 
 extern FILE *yyin;
 

@@ -3,7 +3,7 @@
 %{
 #define YY_DECL int yylex()
 
-#include "parse.tab.hpp"
+#include "parse.tab.h"
 
 int indent = 0;
 %}
