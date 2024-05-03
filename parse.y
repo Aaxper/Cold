@@ -26,10 +26,10 @@
 %token<floatType> FLOAT 
 %token<strType> STRING ID
 %token<boolType> BOOL
-%token ADD SUB MUL DIV LPAREN RPAREN EQUAL COLON
+%token ADD SUB MUL DIV LPAREN RPAREN EQUAL GREATER LESS COLON
 %token NEWLINE INDENT
-%token IF
-%left EQUAL
+%token IF WHILE
+%left EQUAL GREATER LESS
 %left ADD SUB
 %left MUL DIV
 
@@ -45,12 +45,15 @@ result: lines { std::cout << $1->Str() << "\n"; }
 ;
 
 lines: line { $$ = new Lines($1); }
-    | lines line { if ($2) $1->AddLine($2); $$ = $1; }
+    | lines line { $$ = $1; if ($2) $$->AddLine($2); }
 ;
 
 line: NEWLINE { $$ = nullptr; }
     | ID EQUAL expr NEWLINE { $$ = new Assign{ $1, $3, 0 }; }
-    | IF expr COLON NEWLINE line { $$ = new If{ $2, Lines{$5}, 0 }; }
+    | IF expr COLON NEWLINE line { $$ = new If{ $2, $5, 0 }; }
+    | IF expr COLON line { $$ = new If{ $2, $4, 0 }; }
+    | WHILE expr COLON NEWLINE line { $$ = new While{ $2, $5, 0 }; }
+    | WHILE expr COLON line { $$ = new While{ $2, $4, 0 }; }
 	| INDENT line { if ($2) $2->indent++; $$ = $2; }
 ;
 
@@ -64,6 +67,8 @@ expr: INT { $$ = new Int{ $1 }; }
 	| expr MUL expr	{ $$ = new BinOp{ $1, $3, "*" }; }
     | expr DIV expr	{ $$ = new BinOp{ $1, $3, "/" }; }
     | expr EQUAL expr { $$ = new BinOp{ $1, $3, "=" }; }
+    | expr GREATER expr { $$ = new BinOp{ $1, $3, ">" }; }
+    | expr LESS expr { $$ = new BinOp{ $1, $3, "<" }; }
 	| LPAREN expr RPAREN { $$ = $2; }
 ;
 

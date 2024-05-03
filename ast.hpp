@@ -80,39 +80,37 @@ public:
 // A vector of lines of code
 class Lines : public Node {
 public:
-	std::vector<Line *> contents;
-	Lines(Line *contents) : contents(std::vector<Line *>{contents}) {}
+	std::vector<Line *> *contents;
+	Lines(Line *contents) : contents(new std::vector<Line *>{contents}) {}
 	void AddLine(Line *line) {
 		if (line->_indent == 0) {
-			contents.push_back(line);
+			contents->push_back(line);
 		} else {
-			if (contents.back()->isBlock) {
+			if (contents->back()->isBlock) {
 				line->_indent--;
-				contents.back()->AddLine(line);
+				contents->back()->AddLine(line);
 			} else {
 				std::cout << "\033[0;31mError: \033[0;0msyntax error, unexpected INDENT\n"; exit(1);
 			}
 		}
 	}
 	std::string Str() {
-		std::string str;
-		int len = contents.size();
-		// Uncomment the following line if compiling with Clang to prevent a segmentation fault
-		// int _ = len;
+		std::string str = "";
+		int len = contents->size();
 		if (len > 0) {
 			len--;
-			str += contents[0]->Str();
+			str += (*contents)[0]->Str();
 		}
 		int i;
 		while (i < len) {
 			i++;
-			str += "\n" + contents[i]->Str();
+			str += "\n" + (*contents)[i]->Str();
 		}
 		return str;
 	}
 };
 
-// Assignment to a variable
+// An assignment to a variable
 class Assign : public Line {
 public:
 	std::string *name;
@@ -121,13 +119,24 @@ public:
 	std::string Str() { return std::string(indent, '\t') + *name + " = " + val->Str(); }
 };
 
-// Node to store an if statement
+// A node to store an if statement
 class If : public Line {
 public:
 	// Condition for executing the contents in the if statement
 	Expression *cond;
 	Lines contents;
-	If(Expression *cond, Lines contents, int indent) : cond(cond), contents(contents), Line(indent) { isBlock = true; }
+	If(Expression *cond, Line *line, int indent) : cond(cond), contents(line), Line(indent) { isBlock = true; }
 	void AddLine(Line *line) { contents.AddLine(line); }
-	std::string Str() { return "if " + cond->Str() + ":\n" + contents.Str(); }
+	std::string Str() { return std::string(indent, '\t') + "if " + cond->Str() + ":\n" + contents.Str(); }
+};
+
+// A node to store a while loop
+class While : public Line {
+public:
+	// Condition for executing the contents in the if statement
+	Expression *cond;
+	Lines contents;
+	While(Expression *cond, Line *line, int indent) : cond(cond), contents(line), Line(indent) { isBlock = true; }
+	void AddLine(Line *line) { contents.AddLine(line); }
+	std::string Str() { return std::string(indent, '\t') + "while " + cond->Str() + ":\n" + contents.Str(); }
 };

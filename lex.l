@@ -23,11 +23,14 @@ int indent = 0;
 "("	{ return LPAREN; }
 ")"	{ return RPAREN; }
 "="	{ return EQUAL; }
+">"	{ return GREATER; }
+"<"	{ return LESS; }
 ":"	{ return COLON; }
 
 "true" { yylval.boolType = 1; return BOOL; }
 "false" { yylval.boolType = 0; return BOOL; }
 "if" { return IF; }
+"while" { return WHILE; }
 
 [a-zA-Z][a-zA-Z0-9]* { std::string *str = new std::string; *str = yytext; yylval.strType = str; return ID; }
 
