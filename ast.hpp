@@ -13,6 +13,8 @@ public:
 // Base class for all expression nodes
 class Expression : public Node {
 public:
+	// Stores whether the value is calculated at compile or run time
+	bool isConst = false;
 	std::string Str() { return "void"; }
 };
 
@@ -20,28 +22,28 @@ public:
 class Int : public Expression {
 public:
 	int val;
-	Int(int val) : val(val) {}
+	Int(int val) : val(val) { isConst = true; }
 	std::string Str() { return std::to_string(val); }
 };
 // Floating point literal
 class Float : public Expression {
 public:
 	float val;
-	Float(float val) : val(val) {}
+	Float(float val) : val(val) { isConst = true; }
 	std::string Str() { return std::to_string(val); }
 };
 // String literal
 class String : public Expression {
 public:
 	std::string *val;
-	String(std::string *val) : val(val) {}
+	String(std::string *val) : val(val) { isConst = true; }
 	std::string Str() { return *val; }
 };
 // Boolean literal
 class Bool : public Expression {
 public:
 	bool val;
-	Bool(bool val) : val(val) {}
+	Bool(bool val) : val(val) { isConst = true; }
 	std::string Str() { return val ? "true" : "false"; }
 };
 // An access to a variable
@@ -56,7 +58,7 @@ class BinOp : public Expression {
 public:
 	Expression *left, *right;
 	std::string op;
-	BinOp(Expression *left, Expression *right, std::string op) : left(left), right(right), op(op) {}
+	BinOp(Expression *left, Expression *right, std::string op) : left(left), right(right), op(op) { if (left->isConst && right->isConst) isConst = true; }
 	std::string Str() { return "(" + left->Str() + " " + op + " " + right->Str() + ")"; }
 };
 
@@ -95,8 +97,8 @@ public:
 	std::string Str() {
 		std::string str;
 		int len = contents.size();
-		// Uncomment the following line if compiling with Clang to prevent a segmentation fault (Why? I have no idea)
-		// int USELESS = len;
+		// Uncomment the following line if compiling with Clang to prevent a segmentation fault
+		// int _ = len;
 		if (len > 0) {
 			len--;
 			str += contents[0]->Str();
@@ -127,5 +129,5 @@ public:
 	Lines contents;
 	If(Expression *cond, Lines contents, int indent) : cond(cond), contents(contents), Line(indent) { isBlock = true; }
 	void AddLine(Line *line) { contents.AddLine(line); }
-	std::string Str() { return "if " + cond->Str() + " :\n" + contents.Str(); }
+	std::string Str() { return "if " + cond->Str() + ":\n" + contents.Str(); }
 };
