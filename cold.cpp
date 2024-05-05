@@ -1,6 +1,8 @@
 #include <cstring>
 #include <iostream>
 #include <fstream>
+#include "ast.hpp"
+Lines *result = 0;
 #include "parse.tab.h"
 
 extern FILE *yyin;
@@ -14,6 +16,7 @@ int main(int argc, char *argv[]) {
 		exit(1);
 	}
 	yyparse();
+	std::cout << result->Str() << "\n";
 
 	return 0;
 }

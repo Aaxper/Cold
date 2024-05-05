@@ -3,8 +3,14 @@
 %code requires {
     #include <iostream>
 	#include <vector>
+    #include <string>
     #include "ast.hpp"
 
+    extern std::string currentLine;
+    extern int currentColumn;
+    extern int lineCount;
+
+    extern Lines *result;
     extern int yylex();
     extern int yyparse();
     void yyerror(const char* s);
@@ -41,15 +47,14 @@
 
 %%
 
-result: lines { std::cout << $1->Str() << "\n"; }
+result: lines { result = $1; }
 ;
 
 lines: line { $$ = new Lines($1); }
     | lines line { $$ = $1; if ($2) $$->AddLine($2); }
 ;
 
-line: NEWLINE { $$ = nullptr; }
-    | ID EQUAL expr NEWLINE { $$ = new Assign{ $1, $3, 0 }; }
+line: ID EQUAL expr NEWLINE { $$ = new Assign{ $1, $3, 0 }; }
     | IF expr COLON NEWLINE line { $$ = new If{ $2, $5, 0 }; }
     | IF expr COLON line { $$ = new If{ $2, $4, 0 }; }
     | WHILE expr COLON NEWLINE line { $$ = new While{ $2, $5, 0 }; }
@@ -74,7 +79,10 @@ expr: INT { $$ = new Int{ $1 }; }
 
 %%
 
-void yyerror(const char* s) {
-	std::cout << "\033[0;31mError: \033[0;0m" << s << "\n";
+void yyerror(const char *s) {
+    std::string errorString = s;
+	std::cout << "\033[0;31mSyntaxError: \033[0;0m" << errorString.substr(14, errorString.size() - 1) << '\n';
+    std::cout << lineCount << " | " << currentLine << '\n';
+    std::cout << std::string(currentColumn + 2 + (std::to_string(lineCount)).size(), ' ') << "\033[0;31m^\033[0;0m" << std::endl;
 	exit(1);
 }

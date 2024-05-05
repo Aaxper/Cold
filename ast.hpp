@@ -1,13 +1,16 @@
+#pragma once
 #include <string>
 #include <iostream>
 #include <vector>
-//#include <llvm/IR/Value.h>
+#include <llvm/IR/Value.h>
 
 // Base class for all nodes; will never be used explicitly
 class Node {
 public:
 	// A string representation of the node
 	virtual std::string Str() { return "empty node"; }
+	// Convert to LLVM's AST
+	virtual llvm::Value *codegen() { return nullptr; }
 };
 
 // Base class for all expression nodes
@@ -101,7 +104,7 @@ public:
 			len--;
 			str += (*contents)[0]->Str();
 		}
-		int i;
+		int i = 0;
 		while (i < len) {
 			i++;
 			str += "\n" + (*contents)[i]->Str();
