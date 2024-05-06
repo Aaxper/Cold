@@ -1,5 +1,10 @@
 i = 0
 while i < 100:
 	i = i + 1
+				# Comments work
 	if i = 6:
-		a = 1 ++ 2
+		a = 1 + 2
+
+	# Indentation doesn't matter
+										
+								# Neither do empty newlines (even with indentation)
