@@ -89,7 +89,7 @@ public:
 class Lines : public Node {
 public:
 	std::vector<Line *> *contents;
-	Lines(Line *contents) : contents(new std::vector<Line *>{contents}) {}
+	Lines(Line *content) : contents(new std::vector<Line *>{content}) { if (!((*contents)[0])) contents->pop_back();}
 	void AddLine(Line *line) {
 		if (line->_indent == 0) {
 			contents->push_back(line);
