@@ -4,6 +4,7 @@
 #include "ast.hpp"
 Lines *result = 0;
 #include "parse.tab.h"
+#include "validate.cpp"
 
 extern FILE *yyin;
 
@@ -16,7 +17,8 @@ int main(int argc, char *argv[]) {
 		exit(1);
 	}
 	yyparse();
-	std::cout << result->Str() << "\n";
+	std::cout << result->Str() << std::endl;
+	validate(result);
 
 	return 0;
 }

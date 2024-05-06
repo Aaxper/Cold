@@ -10,7 +10,7 @@ int currentColumn = 0;
 bool isNewLine = true;
 int lineCount = 1;
 
-#define YY_USER_ACTION if (isNewLine) currentColumn = 0; if (yytext[0] != '\n') isNewLine = false; if (yytext[0] != '\t') currentColumn += yyleng;
+#define YY_USER_ACTION if (isNewLine) currentColumn = 0; if (yytext[0] != '\n' && yytext[0] != '\t') isNewLine = false; if (yytext[0] != '\t') currentColumn += yyleng;
 
 #include "parse.tab.h"
 

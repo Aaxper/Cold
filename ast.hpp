@@ -73,6 +73,11 @@ public:
 	// Will be 0 for any properly placed line
 	int _indent;
 	Line(int indent) : indent(indent), _indent(indent) {}
+	// Increases both indent and _indent by 1
+	void Indent() {
+		indent++;
+		_indent++;
+	}
 	// Stores if the current line a container for other lines (if, while, etc)
 	bool isBlock = false;
 	// Should only be called on certain derived classes (if, while, etc.)
@@ -93,7 +98,8 @@ public:
 				line->_indent--;
 				contents->back()->AddLine(line);
 			} else {
-				std::cout << "\033[0;31mError: \033[0;0msyntax error, unexpected INDENT\n"; exit(1);
+				std::cout << "\033[0;31mError: \033[0;0msyntax error, unexpected INDENT\n"; 
+				exit(1);
 			}
 		}
 	}
