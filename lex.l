@@ -6,11 +6,11 @@
 #define YY_DECL int yylex()
 
 std::string currentLine = "";
-int currentColumn = 0;
-bool isNewLine = true;
+int currentColumn = 1;
 int lineCount = 1;
+bool nextIsReal = true;
 
-#define YY_USER_ACTION if (isNewLine) currentColumn = 0; if (yytext[0] == '\n') isNewLine = true; if (yytext[0] != '\n' && yytext[0] != '\t') isNewLine = false; if (yytext[0] != '\t') currentColumn += yyleng;
+#define YY_USER_ACTION if (yytext[0] == '\n') { currentLine = ""; nextIsReal = true; } else if (yytext[0] != '\t' && nextIsReal) { nextIsReal = false; currentColumn += yyleng; }
 
 #include "parse.tab.h"
 
@@ -19,13 +19,13 @@ int indent = 0;
 
 %%
 
-.* { if (isNewLine) { currentLine = yytext; while (currentLine[0] == '\t') currentLine.erase(0, 1); } REJECT; }
+.* { if (currentLine == "") { currentLine = yytext; currentColumn = 1; lineCount++; nextIsReal = true; } REJECT; }
 
 [0-9]+\.[0-9]* { yylval.floatType = atof(yytext); return FLOAT; }
 [0-9]+ { yylval.intType = atoi(yytext); return INT; }
 \"[^\"]*\" { std::string *str = new std::string; *str = yytext; *str = str->substr(1, str->length()-2); yylval.strType = str; return STRING; }
 
-#.* {}
+#.* { return NEWLINE; }
 
 "+" { return ADD; }
 "-"	{ return SUB; }
@@ -49,7 +49,7 @@ int indent = 0;
 \t { return INDENT; }
 \n { return NEWLINE; }
 
-<<EOF>> { static int once = 0; if (!once) { if (isNewLine) return 0; once++; return NEWLINE; } return 0; }
+<<EOF>> { static int once = 0; if (!once) { if (currentLine == "") return 0; once++; return NEWLINE; } return 0; }
 
 . { yyerror(((std::string)"syntax error, unexpected '" + yytext + "'").data()); }
 

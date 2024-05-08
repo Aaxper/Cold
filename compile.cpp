@@ -1,5 +1,5 @@
 #include <map>
-#include "/usr/lib/llvm-12/include/llvm/IR/IRBuilder.h"
+#include "llvm/IR/IRBuilder.h"
 #include "ast.hpp"
 
 std::unique_ptr<llvm::LLVMContext> Context;
