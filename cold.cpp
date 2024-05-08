@@ -8,15 +8,24 @@ Lines *result = 0;
 extern FILE *yyin;
 
 int main(int argc, char *argv[]) {
+	std::ofstream output;
+	bool hasOutput = false;
 	if (argc > 1) {
 		yyin = fopen(argv[1], "r");
+		if (argc > 2) {
+			output = std::ofstream(argv[2], std::ofstream::trunc);
+			hasOutput = true;
+		}
 	}
 	else {
 		std::cout << "Error: found no file to open\n";
 		exit(1);
 	}
 	yyparse();
-	std::cout << result->Str() << std::endl;
+	if (hasOutput)
+		output << result->Str();
+	else
+		std::cout << result->Str() << std::endl;
 	/*Float num(11.2);
 	std::cout << "Float initialized successfully\n";
 	num.codegen();
