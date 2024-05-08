@@ -13,12 +13,16 @@ int main(int argc, char *argv[]) {
 	if (argc > 1) {
 		yyin = fopen(argv[1], "r");
 		if (argc > 2) {
+			if (argv[1] == argv[2]) {
+				std::cout << "InputError: cannot read from and write to the same file\n";
+				exit(1);
+			}
 			output = std::ofstream(argv[2], std::ofstream::trunc);
 			hasOutput = true;
 		}
 	}
 	else {
-		std::cout << "Error: found no file to open\n";
+		std::cout << "InputError: found no file to open\n";
 		exit(1);
 	}
 	yyparse();

@@ -87,7 +87,7 @@ public:
 	// Stores if the current line a container for other lines (if, while, etc)
 	bool isBlock = false;
 	// Should only be called on certain derived classes (if, while, etc.)
-	virtual void AddLine(Line *line) {}
+	virtual void AddLine(Line *line, int indent = 0) {}
 	virtual std::string Str() override { return "empty line"; }
 };
 
@@ -96,21 +96,20 @@ class Lines : public Node {
 public:
 	std::vector<Line *> *contents;
 	Lines(Line *content) : contents(new std::vector<Line *>{ content }) {
-		if (!((*contents)[0]))
-			contents->pop_back();
+		if (!(*contents)[0]) contents->pop_back();
 	}
-	void AddLine(Line *line, int indent = -1) {
+	void AddLine(Line *line, int indent = 0) {
 		if (line->_indent == 0) {
-			line->indent = indent + 1;
+			line->indent = indent;
 			contents->push_back(line);
 		}
 		else {
 			if (contents->back()->isBlock) {
 				line->_indent--;
-				contents->back()->AddLine(line);
+				contents->back()->AddLine(line, indent + 1);
 			}
 			else {
-				std::cout << "\033[0;31mError: \033[0;0msyntax error, unexpected INDENT\n";
+				std::cout << "\033[0;31mSyntaxError: \033[0;0msyntax error, unexpected INDENT\n";
 				exit(1);
 			}
 		}
@@ -148,7 +147,7 @@ public:
 	Expression *cond;
 	Lines contents;
 	If(Expression *cond, Line *line, int indent) : cond(cond), contents(line), Line(indent) { if (contents.contents->size()) contents.contents->back()->indent++; isBlock = true; }
-	void AddLine(Line *line) override { contents.AddLine(line, indent); }
+	void AddLine(Line *line, int indent = 0) override { contents.AddLine(line, indent); }
 	std::string Str() override { return std::string(indent, '\t') + "if " + cond->Str() + ":\n" + contents.Str(); }
 	llvm::Value *codegen() override;
 };
@@ -160,7 +159,7 @@ public:
 	Expression *cond;
 	Lines contents;
 	While(Expression *cond, Line *line, int indent) : cond(cond), contents(line), Line(indent) { if (contents.contents->size()) contents.contents->back()->indent++; isBlock = true; }
-	void AddLine(Line *line) override { contents.AddLine(line, indent); }
+	void AddLine(Line *line, int indent = 0) override { contents.AddLine(line, indent); }
 	std::string Str() override { return std::string(indent, '\t') + "while " + cond->Str() + ":\n" + contents.Str(); }
 	llvm::Value *codegen() override;
 };

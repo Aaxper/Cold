@@ -13,8 +13,6 @@ bool nextIsReal = true;
 #define YY_USER_ACTION if (yytext[0] == '\n') { currentLine = ""; nextIsReal = true; } else if (yytext[0] != '\t' && nextIsReal) { nextIsReal = false; currentColumn += yyleng; }
 
 #include "parse.tab.h"
-
-int indent = 0;
 %}
 
 %%
@@ -46,7 +44,7 @@ int indent = 0;
 [a-zA-Z][a-zA-Z0-9]* { std::string *str = new std::string; *str = yytext; yylval.strType = str; return ID; }
 
 " " {};
-\t { return INDENT; }
+(\t|"    ") { return INDENT; }
 \n { return NEWLINE; }
 
 <<EOF>> { static int once = 0; if (!once) { if (currentLine == "") return 0; once++; return NEWLINE; } return 0; }
