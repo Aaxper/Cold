@@ -79,15 +79,15 @@ public:
 	// Will be 0 for any properly placed line
 	int _indent;
 	Line(int indent) : indent(indent), _indent(indent) {}
-	// Increases both indent and _indent by 1
+	// Increases both `indent` and `_indent` by 1
 	void Indent() {
 		indent++;
 		_indent++;
 	}
-	// Stores if the current line a container for other lines (if, while, etc)
+	// Stores if the current line is a container for other lines (if, while, etc)
 	bool isBlock = false;
-	// Should only be called on certain derived classes (if, while, etc.)
-	virtual void AddLine(Line *line, int indent = 0) {}
+	// Should only be called if `isBlock` is true
+	virtual void AddLine(Line *&line, int indent = 0) {}
 	virtual std::string Str() override { return "empty line"; }
 };
 
@@ -95,10 +95,8 @@ public:
 class Lines : public Node {
 public:
 	std::vector<Line *> *contents;
-	Lines(Line *content) : contents(new std::vector<Line *>{ content }) {
-		if (!(*contents)[0]) contents->pop_back();
-	}
-	void AddLine(Line *line, int indent = 0) {
+	Lines(Line *&content) : contents(new std::vector<Line *>{ content }) { if (!(*contents)[0]) { contents->pop_back(); } }
+	void AddLine(Line *&line, int indent = 0) {
 		if (line->_indent == 0) {
 			line->indent = indent;
 			contents->push_back(line);
@@ -135,7 +133,7 @@ class Assign : public Line {
 public:
 	std::string *name;
 	Expression *val;
-	Assign(std::string *name, Expression *val, int indent) : name(name), val(val), Line(indent) {}
+	Assign(std::string *name, Expression *&val, int indent) : name(name), val(val), Line(indent) {}
 	std::string Str() override { return std::string(indent, '\t') + *name + " = " + val->Str(); }
 	llvm::Value *codegen() override;
 };
@@ -146,9 +144,9 @@ public:
 	// Condition for executing the contents in the if statement
 	Expression *cond;
 	Lines contents;
-	If(Expression *cond, Line *line, int indent) : cond(cond), contents(line), Line(indent) { if (contents.contents->size()) contents.contents->back()->indent++; isBlock = true; }
-	void AddLine(Line *line, int indent = 0) override { contents.AddLine(line, indent); }
-	std::string Str() override { return std::string(indent, '\t') + "if " + cond->Str() + ":\n" + contents.Str(); }
+	If(Expression *&cond, Line *&line, int indent) : cond(cond), contents(line), Line(indent) { if (contents.contents->size()) contents.contents->back()->indent = indent + 1; isBlock = true; }
+	void AddLine(Line *&line, int indent = 0) override { contents.AddLine(line, indent); }
+	std::string Str() override { return std::string(indent, '\t') + "if " + cond->Str() + "\n" + contents.Str(); }
 	llvm::Value *codegen() override;
 };
 
@@ -158,8 +156,8 @@ public:
 	// Condition for executing the contents in the if statement
 	Expression *cond;
 	Lines contents;
-	While(Expression *cond, Line *line, int indent) : cond(cond), contents(line), Line(indent) { if (contents.contents->size()) contents.contents->back()->indent++; isBlock = true; }
-	void AddLine(Line *line, int indent = 0) override { contents.AddLine(line, indent); }
-	std::string Str() override { return std::string(indent, '\t') + "while " + cond->Str() + ":\n" + contents.Str(); }
+	While(Expression *&cond, Line *&line, int indent) : cond(cond), contents(line), Line(indent) { if (contents.contents->size()) contents.contents->back()->indent = indent + 1; isBlock = true; }
+	void AddLine(Line *&line, int indent = 0) override { contents.AddLine(line, indent); }
+	std::string Str() override { return std::string(indent, '\t') + "while " + cond->Str() + "\n" + contents.Str(); }
 	llvm::Value *codegen() override;
 };

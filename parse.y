@@ -56,10 +56,11 @@ lines: line { $$ = new Lines($1); }
 
 line: NEWLINE { $$ = nullptr; }
     | ID EQUAL expr NEWLINE { $$ = new Assign{ $1, $3, 0 }; }
-    | IF expr COLON line { $$ = new If{ $2, $4, 0 }; }
-    | WHILE expr COLON line { $$ = new While{ $2, $4, 0 }; }
+    | IF expr NEWLINE line { $$ = new If{ $2, $4, 0 }; }
+    | WHILE expr NEWLINE line { $$ = new While{ $2, $4, 0 }; }
 	| INDENT line { if ($2) $2->Indent(); $$ = $2; }
 ;
+
 expr: INT { $$ = new Int{ $1 }; }
     | FLOAT { $$ = new Float{ $1 }; }
     | STRING { $$ = new String{ $1 }; }
