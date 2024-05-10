@@ -6,46 +6,45 @@
 #define YY_DECL int yylex()
 
 std::string currentLine = "";
-int currentColumn = 1;
+int currentColumn = 0;
 int lineCount = 1;
-bool nextIsReal = true;
-
-#define YY_USER_ACTION if (yytext[0] == '\n') { currentLine = ""; nextIsReal = true; } else if (yytext[0] != '\t' && nextIsReal) { nextIsReal = false; currentColumn += yyleng; }
 
 #include "parse.tab.h"
 %}
 
 %%
 
-.* { if (currentLine == "") { currentLine = yytext; currentColumn = 1; lineCount++; nextIsReal = true; } REJECT; }
+.* { if (currentLine == "") { currentLine = yytext; } REJECT; }
 
-[0-9]+\.[0-9]* { yylval.floatType = atof(yytext); return FLOAT; }
-[0-9]+ { yylval.intType = atoi(yytext); return INT; }
-\"[^\"]*\" { std::string *str = new std::string; *str = yytext; *str = str->substr(1, str->length()-2); yylval.strType = str; return STRING; }
+[0-9]+\.[0-9]* { yylval.floatType = atof(yytext); currentColumn += yyleng; return FLOAT; }
+[0-9]+ { yylval.intType = atoi(yytext); currentColumn += yyleng; return INT; }
+\"[^\"]*\" { std::string *str = new std::string; *str = yytext; *str = str->substr(1, str->length()-2); yylval.strType = str; currentColumn += yyleng; return STRING; }
 
-#.* { return NEWLINE; }
+#.* {}
 
-"+" { return ADD; }
-"-"	{ return SUB; }
-"*"	{ return MUL; }
-"/"	{ return DIV; }
-"("	{ return LPAREN; }
-")"	{ return RPAREN; }
-"="	{ return EQUAL; }
-">"	{ return GREATER; }
-"<"	{ return LESS; }
-":"	{ return COLON; }
+"+" { currentColumn++; return ADD; }
+"-"	{ currentColumn++; return SUB; }
+"*"	{ currentColumn++; return MUL; }
+"/"	{ currentColumn++; return DIV; }
+"("	{ currentColumn++; return LPAREN; }
+")"	{ currentColumn++; return RPAREN; }
+"="	{ currentColumn++; return EQUAL; }
+">=" { currentColumn += 2; return GREATEREQUAL; }
+">"	{ currentColumn++; return GREATER; }
+"<=" { currentColumn += 2; return LESSEQUAL; }
+"<"	{ currentColumn++; return LESS; }
+":"	{ currentColumn++; return COLON; }
 
-"true" { yylval.boolType = 1; return BOOL; }
-"false" { yylval.boolType = 0; return BOOL; }
-"if" { return IF; }
-"while" { return WHILE; }
+"true" { currentColumn += 4; yylval.boolType = 1; return BOOL; }
+"false" { currentColumn += 5; yylval.boolType = 0; return BOOL; }
+"if" { currentColumn += 2; return IF; }
+"while" { currentColumn += 5; return WHILE; }
 
-[a-zA-Z][a-zA-Z0-9]* { std::string *str = new std::string; *str = yytext; yylval.strType = str; return ID; }
+[a-zA-Z][a-zA-Z0-9]* { currentColumn += yyleng; std::string *str = new std::string; *str = yytext; yylval.strType = str; return ID; }
 
-" " {};
-(\t|"    ") { return INDENT; }
-\n { return NEWLINE; }
+" " { currentColumn++; };
+(\t|"    ") { currentColumn += yyleng; return INDENT; }
+\n { currentColumn = 0; currentLine = ""; lineCount++; return NEWLINE; }
 
 <<EOF>> { static int once = 0; if (!once) { if (currentLine == "") return 0; once++; return NEWLINE; } return 0; }
 

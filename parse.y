@@ -28,14 +28,14 @@
 
 %define parse.error verbose
 
-%token<intType> INT 
-%token<floatType> FLOAT 
-%token<strType> STRING ID
-%token<boolType> BOOL
-%token ADD SUB MUL DIV LPAREN RPAREN EQUAL GREATER LESS COLON
-%token NEWLINE INDENT
-%token IF WHILE
-%left EQUAL GREATER LESS
+%token<intType> INT "integer"
+%token<floatType> FLOAT "float"
+%token<strType> STRING "string" ID "identifier"
+%token<boolType> BOOL "boolean"
+%token ADD "addition" SUB "subtraction" MUL "multiplication" DIV "division" LPAREN "opening parenthesis" RPAREN "closing parenthesis" EQUAL "equality" GREATER "greater than comparison" LESS "less than comparison" GREATEREQUAL "greater than or equal to comparison" LESSEQUAL "less than or equal to comparison" COLON "colon"
+%token NEWLINE "new line" INDENT "indent"
+%token IF "if" WHILE "while"
+%left EQUAL GREATEREQUAL GREATER LESSEQUAL LESS
 %left ADD SUB
 %left MUL DIV
 
@@ -70,7 +70,9 @@ expr: INT { $$ = new Int{ $1 }; }
 	| expr MUL expr	{ $$ = new BinOp{ $1, $3, "*" }; }
     | expr DIV expr	{ $$ = new BinOp{ $1, $3, "/" }; }
     | expr EQUAL expr { $$ = new BinOp{ $1, $3, "=" }; }
+    | expr GREATEREQUAL expr { $$ = new BinOp{ $1, $3, ">=" }; }
     | expr GREATER expr { $$ = new BinOp{ $1, $3, ">" }; }
+    | expr LESSEQUAL expr { $$ = new BinOp{ $1, $3, "<=" }; }
     | expr LESS expr { $$ = new BinOp{ $1, $3, "<" }; }
 	| LPAREN expr RPAREN { $$ = $2; }
 ;

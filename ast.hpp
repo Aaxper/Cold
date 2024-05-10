@@ -109,7 +109,7 @@ public:
 				contents->back()->AddLine(line, indent + 1);
 			}
 			else {
-				std::cout << "\033[0;31mSyntaxError: \033[0;0msyntax error, unexpected INDENT\n";
+				std::cout << "\033[0;31mSyntaxError: \033[0;0munexpected indent\n";
 				exit(1);
 			}
 		}
