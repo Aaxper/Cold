@@ -32,12 +32,12 @@
 %token<floatType> FLOAT "float"
 %token<strType> STRING "string" ID "identifier"
 %token<boolType> BOOL "boolean"
-%token ADD "addition" SUB "subtraction" MUL "multiplication" DIV "division" LPAREN "opening parenthesis" RPAREN "closing parenthesis" EQUAL "equality" GREATER "greater than comparison" LESS "less than comparison" GREATEREQUAL "greater than or equal to comparison" LESSEQUAL "less than or equal to comparison" COLON "colon"
+%token ADD "addition" SUB "subtraction" MUL "multiplication" DIV "division" MOD "modulus" LPAREN "opening parenthesis" RPAREN "closing parenthesis" EQUAL "equality" GREATER "greater than comparison" LESS "less than comparison" GREATEREQUAL "greater than or equal to comparison" LESSEQUAL "less than or equal to comparison" COLON "colon"
 %token NEWLINE "new line" INDENT "indent"
 %token IF "if" WHILE "while"
 %left EQUAL GREATEREQUAL GREATER LESSEQUAL LESS
 %left ADD SUB
-%left MUL DIV
+%left MUL DIV MOD
 
 %type<exprType> expr
 %type<lineType> line
@@ -56,7 +56,7 @@ lines: line { $$ = new Lines($1); }
 
 line: NEWLINE { $$ = nullptr; }
     | ID EQUAL expr NEWLINE { $$ = new Assign{ $1, $3, 0 }; }
-    | IF expr NEWLINE line { $$ = new If{ $2, $4, 0 }; }
+    | IF expr NEWLINE { Line *x = nullptr; $$ = new If{ $2, x, 0 }; }
     | WHILE expr NEWLINE line { $$ = new While{ $2, $4, 0 }; }
 	| INDENT line { if ($2) $2->Indent(); $$ = $2; }
 ;
@@ -70,6 +70,7 @@ expr: INT { $$ = new Int{ $1 }; }
 	| expr SUB expr	{ $$ = new BinOp{ $1, $3, "-" }; }
 	| expr MUL expr	{ $$ = new BinOp{ $1, $3, "*" }; }
     | expr DIV expr	{ $$ = new BinOp{ $1, $3, "/" }; }
+    | expr MOD expr	{ $$ = new BinOp{ $1, $3, "%" }; }
     | expr EQUAL expr { $$ = new BinOp{ $1, $3, "=" }; }
     | expr GREATEREQUAL expr { $$ = new BinOp{ $1, $3, ">=" }; }
     | expr GREATER expr { $$ = new BinOp{ $1, $3, ">" }; }

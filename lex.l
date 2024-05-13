@@ -8,17 +8,18 @@
 std::string currentLine = "";
 int currentColumn = 0;
 int lineCount = 1;
+bool isNewLine = false;
 
 #include "parse.tab.h"
 %}
 
 %%
 
-.* { if (currentLine == "") { currentLine = yytext; } REJECT; }
+.* { if (currentLine == "") { currentLine = yytext; while (currentLine[0] == '\t' || currentLine[0] == ' ') { currentLine.erase(0, 1); currentColumn--; } } else if (isNewLine) { currentColumn = 0; currentLine = ""; lineCount++; isNewLine = false; } REJECT; }
 
 [0-9]+\.[0-9]* { yylval.floatType = atof(yytext); currentColumn += yyleng; return FLOAT; }
 [0-9]+ { yylval.intType = atoi(yytext); currentColumn += yyleng; return INT; }
-\"[^\"]*\" { std::string *str = new std::string; *str = yytext; *str = str->substr(1, str->length()-2); yylval.strType = str; currentColumn += yyleng; return STRING; }
+\"[^\"\n]*\" { std::string *str = new std::string; *str = yytext; *str = str->substr(1, str->length()-2); yylval.strType = str; currentColumn += yyleng; return STRING; }
 
 #.* {}
 
@@ -26,6 +27,7 @@ int lineCount = 1;
 "-"	{ currentColumn++; return SUB; }
 "*"	{ currentColumn++; return MUL; }
 "/"	{ currentColumn++; return DIV; }
+"%"	{ currentColumn++; return MOD; }
 "("	{ currentColumn++; return LPAREN; }
 ")"	{ currentColumn++; return RPAREN; }
 "="	{ currentColumn++; return EQUAL; }
@@ -44,7 +46,7 @@ int lineCount = 1;
 
 " " { currentColumn++; };
 (\t|"    ") { currentColumn += yyleng; return INDENT; }
-\n { currentColumn = 0; currentLine = ""; lineCount++; return NEWLINE; }
+\n { isNewLine = true; return NEWLINE; }
 
 <<EOF>> { static int once = 0; if (!once) { if (currentLine == "") return 0; once++; return NEWLINE; } return 0; }
 

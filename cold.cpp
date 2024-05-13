@@ -14,7 +14,7 @@ int main(int argc, char *argv[]) {
 		yyin = fopen(argv[1], "r");
 		if (argc > 2) {
 			if (argv[1] == argv[2]) {
-				std::cout << "InputError: cannot read from and write to the same file\n";
+				std::cout << "\033[0;31mFlagError: \033[0;0 cannot read from and write to the same file\n";
 				exit(1);
 			}
 			output = std::ofstream(argv[2], std::ofstream::trunc);
@@ -31,7 +31,7 @@ int main(int argc, char *argv[]) {
 	else
 		std::cout << result->Str() << std::endl;
 	/*Float num(11.2);
-	std::cout << "Float initialized successfully\n";
+	std::cout << "Float initialized successfully" << std::endl;
 	num.codegen();
 	std::cout << "Float to LLVM IR successful\n";*/
 
