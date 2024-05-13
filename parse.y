@@ -57,7 +57,7 @@ lines: line { $$ = new Lines($1); }
 line: NEWLINE { $$ = nullptr; }
     | ID EQUAL expr NEWLINE { $$ = new Assign{ $1, $3, 0 }; }
     | IF expr NEWLINE { Line *x = nullptr; $$ = new If{ $2, x, 0 }; }
-    | WHILE expr NEWLINE line { $$ = new While{ $2, $4, 0 }; }
+    | WHILE expr NEWLINE { Line *x = nullptr; $$ = new While{ $2, x, 0 }; }
 	| INDENT line { if ($2) $2->Indent(); $$ = $2; }
 ;
 
