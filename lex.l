@@ -9,17 +9,18 @@ std::string currentLine = "";
 int currentColumn = 0;
 int lineCount = 1;
 bool isNewLine = false;
+bool isIndent = true;
 
 #include "parse.tab.h"
 %}
 
 %%
 
-.* { if (currentLine == "") { currentLine = yytext; while (currentLine[0] == '\t' || currentLine[0] == ' ') { currentLine.erase(0, 1); currentColumn--; } } else if (isNewLine) { currentColumn = 0; currentLine = ""; lineCount++; isNewLine = false; } REJECT; }
+[^ \t].* { if (isNewLine) { lineCount++; isNewLine = false; currentColumn = 0; currentLine = yytext; } REJECT; }
 
 [0-9]+\.[0-9]* { yylval.floatType = atof(yytext); currentColumn += yyleng; return FLOAT; }
 [0-9]+ { yylval.intType = atoi(yytext); currentColumn += yyleng; return INT; }
-\"[^\"\n]*\" { std::string *str = new std::string; *str = yytext; *str = str->substr(1, str->length()-2); yylval.strType = str; currentColumn += yyleng; return STRING; }
+\"[^\"\n]*\" { std::string *str = new std::string; *str = yytext; *str = str->substr(1, str->length() - 2); yylval.strType = str; currentColumn += yyleng; return STRING; }
 
 #.* {}
 
@@ -36,6 +37,7 @@ bool isNewLine = false;
 "<=" { currentColumn += 2; return LESSEQUAL; }
 "<"	{ currentColumn++; return LESS; }
 ":"	{ currentColumn++; return COLON; }
+"," { currentColumn++; return COMMA; }
 
 "true" { currentColumn += 4; yylval.boolType = 1; return BOOL; }
 "false" { currentColumn += 5; yylval.boolType = 0; return BOOL; }
@@ -44,9 +46,9 @@ bool isNewLine = false;
 
 [a-zA-Z][a-zA-Z0-9]* { currentColumn += yyleng; std::string *str = new std::string; *str = yytext; yylval.strType = str; return ID; }
 
-" " { currentColumn++; };
-(\t|"    ") { currentColumn += yyleng; return INDENT; }
-\n { isNewLine = true; return NEWLINE; }
+" " { currentColumn++; }
+(\t|"    ") { return INDENT; }
+\n { currentColumn++; isNewLine = true; return NEWLINE; }
 
 <<EOF>> { static int once = 0; if (!once) { if (currentLine == "") return 0; once++; return NEWLINE; } return 0; }
 

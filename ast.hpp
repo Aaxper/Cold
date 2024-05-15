@@ -13,11 +13,13 @@ public:
 	virtual llvm::Value *codegen() { return nullptr; }
 };
 
-// Base class for all expression nodes
+// Base class for all expression nodes, also represents void values
 class Expression : public Node {
 public:
 	// Stores whether the value is calculated at compile or run time
 	bool isConst = false;
+	// Stores if the value is one value or a group of them
+	bool isList = false;
 	std::string Str() { return "void"; }
 };
 
@@ -76,6 +78,31 @@ class Func : public Expression {
 	Expression *val;
 	Func(std::string *name, Expression *&val) : name(name), val(val) {}
 	std::string Str() override { return *name + "(" + val->Str() + ")"; }
+	llvm::Value *codegen() override;
+};
+// A list of values
+class List : public Expression {
+public:
+	std::vector<Expression *> contents;
+	List(Expression *first) : contents(std::vector<Expression *>{ first }) { isList = true; }
+	std::string Str() override {
+		std::string str = "(";
+		if (contents.size()) str += contents[0]->Str();
+		for (int i = 1; i < contents.size(); i++)
+			str += ", " + contents[i]->Str();
+		return str + ")";
+	}
+	llvm::Value *codegen() override;
+};
+
+class Function : public Expression {
+public:
+	std::string name;
+	Expression *val;
+	Function(std::string name, Expression *val) : name(name), val(val) {}
+	std::string Str() override {
+		return name + "(" + val->Str() + ")";
+	}
 	llvm::Value *codegen() override;
 };
 

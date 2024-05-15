@@ -34,6 +34,14 @@ llvm::Value *BinOp::codegen() {
     return nullptr;
 }
 
+llvm::Value *List::codegen() {
+    return nullptr;
+}
+
+llvm::Value *Function::codegen() {
+    return nullptr;
+}
+
 llvm::Value *Assign::codegen() {
     return nullptr;
 }
