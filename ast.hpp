@@ -331,6 +331,9 @@ inline Expression *interpretConsts(Expression *expr, Line *thisLine) {
 					return new Bool(((Float *)left)->val == ((Float *)right)->val);
 				}
 			}
+			if (left->Type == t_string && right->Type == t_string) {
+				return new Bool(*((String *)left)->val == *((String *)right)->val);
+			}
 			std::cout << "\033[0;31mTypeError: \033[0;0mcannot divide " << strOfType[left->Type] << " and " << strOfType[right->Type] << "\n";
 			std::cout << thisLine->num << " | " << thisLine->self;
 			exit(1);
