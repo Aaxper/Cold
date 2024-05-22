@@ -27,7 +27,11 @@ int main(int argc, char *argv[]) {
 	}
 	yyparse();
 	interpretConsts(result);
-	std::cout << result->Str() << std::endl;
+	std::string str = result->Str();
+		if (hasOutput)
+			output.write(str.data(), str.size());
+		else
+			std::cout << str << std::endl;
 	/*Float num(11.2);
 	std::cout << "Float initialized successfully" << std::endl;
 	num.codegen();
