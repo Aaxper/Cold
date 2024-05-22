@@ -23,6 +23,7 @@
     bool boolType;
 	Line *lineType;
 	Lines *linesType;
+    Func *funcType;
     Expression *exprType;
 }
 
@@ -35,12 +36,13 @@
 %token ADD "addition" SUB "subtraction" MUL "multiplication" DIV "division" MOD "modulus" COMMA "comma" LPAREN "opening parenthesis" RPAREN "closing parenthesis" EQUAL "equality" GREATER "greater than comparison" LESS "less than comparison" GREATEREQUAL "greater than or equal to comparison" LESSEQUAL "less than or equal to comparison" COLON "colon"
 %token NEWLINE "new line" INDENT "indent"
 %token IF "if" WHILE "while"
+%left COMMA
 %left EQUAL GREATEREQUAL GREATER LESSEQUAL LESS
 %left ADD SUB
 %left MUL DIV MOD
-%left COMMA
 
-%type<exprType> expr func
+%type<exprType> expr 
+%type<funcType> func
 %type<lineType> line
 %type<linesType> lines
 
@@ -56,19 +58,19 @@ lines: line { $$ = new Lines($1); }
 ;
 
 line: NEWLINE { $$ = nullptr; }
-    | ID EQUAL expr NEWLINE { $$ = new Assign{ $1, $3, 0 }; }
-    | IF expr NEWLINE { Line *x = nullptr; $$ = new If{ $2, x, 0 }; }
-    | WHILE expr NEWLINE { Line *x = nullptr; $$ = new While{ $2, x, 0 }; }
-	| INDENT line { if ($2) $2->Indent(); $$ = $2; }
+    | ID EQUAL expr NEWLINE { $$ = new Assign{ $1, $3, 0 }; $$->self = currentLine + "\n"; $$->num = lineCount; }
+    | IF expr NEWLINE { Line *x = nullptr; $$ = new If{ $2, x, 0 }; $$->self = currentLine + "\n"; }
+    | WHILE expr NEWLINE { Line *x = nullptr; $$ = new While{ $2, x, 0 }; $$->self = currentLine + "\n"; }
+    | func NEWLINE { $$ = new Assign{ nullptr, $1, 0 }; $$->self = currentLine + "\n"; }
+	| INDENT line { if ($2) $2->Indent(); $$ = $2; $$->self = currentLine + "\n"; }
 ;
 
 expr: INT { $$ = new Int( $1 ); }
-    | SUB INT { $$ = new Int( -$2 ); }
     | FLOAT { $$ = new Float( $1 ); }
-    | SUB FLOAT { $$ = new Float( -$2 ); }
     | STRING { $$ = new String( $1 ); }
     | BOOL { $$ = new Bool( $1 ); }
     | ID { $$ = new Var( $1 ); }
+    | SUB expr { $$ = new BinOp{ new Int(0), $2, "-" }; }
 	| expr ADD expr	{ $$ = new BinOp( $1, $3, "+" ); }
 	| expr SUB expr	{ $$ = new BinOp( $1, $3, "-" ); }
 	| expr MUL expr	{ $$ = new BinOp( $1, $3, "*" ); }
@@ -98,7 +100,8 @@ expr: INT { $$ = new Int( $1 ); }
     | func { $$ = $1; }
 ;
 
-func: ID expr { $$ = new Function(*$1, $2); }
+func: ID expr { $$ = new Func(*$1, $2); }
+    | ID LPAREN RPAREN { $$ = new Func(*$1, nullptr); }
 
 %%
 

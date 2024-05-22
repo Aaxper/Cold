@@ -7,8 +7,8 @@
 
 std::string currentLine = "";
 int currentColumn = 0;
-int lineCount = 1;
-bool isNewLine = false;
+int lineCount = 0;
+bool isNewLine = true;
 bool isIndent = true;
 
 #include "parse.tab.h"
@@ -16,7 +16,7 @@ bool isIndent = true;
 
 %%
 
-[^ \t].* { if (isNewLine) { lineCount++; isNewLine = false; currentColumn = 0; currentLine = yytext; } REJECT; }
+[^ \t].* { if (isNewLine) { isNewLine = false; lineCount++; currentColumn = 0; currentLine = yytext; } REJECT; }
 
 [0-9]+\.[0-9]* { yylval.floatType = atof(yytext); currentColumn += yyleng; return FLOAT; }
 [0-9]+ { yylval.intType = atoi(yytext); currentColumn += yyleng; return INT; }
@@ -50,8 +50,8 @@ bool isIndent = true;
 (\t|"    ") { return INDENT; }
 \n { currentColumn++; isNewLine = true; return NEWLINE; }
 
-<<EOF>> { static int once = 0; if (!once) { if (currentLine == "") return 0; once++; return NEWLINE; } return 0; }
+<<EOF>> { static int once = 0; if (!once) { once++; return NEWLINE; } return 0; }
 
-. { yyerror(((std::string)"syntax error, unexpected '" + yytext + "'").data()); }
+. { currentColumn++; yyerror(((std::string)"syntax error, unexpected '" + yytext + "'").data()); }
 
 %%
