@@ -2,6 +2,7 @@
 #include <iostream>
 #include <fstream>
 #include "ast.hpp"
+#include "object_tree.hpp"
 Lines *result = 0;
 #include "parse.tab.h"
 
@@ -28,10 +29,10 @@ int main(int argc, char *argv[]) {
 	yyparse();
 	interpretConsts(result);
 	std::string str = result->Str();
-		if (hasOutput)
-			output.write(str.data(), str.size());
-		else
-			std::cout << str << std::endl;
+	if (hasOutput)
+		output.write(str.data(), str.size());
+	else
+		std::cout << str << std::endl;
 	/*Float num(11.2);
 	std::cout << "Float initialized successfully" << std::endl;
 	num.codegen();

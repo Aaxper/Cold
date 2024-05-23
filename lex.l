@@ -43,11 +43,12 @@ bool isIndent = true;
 "false" { currentColumn += 5; yylval.boolType = 0; return BOOL; }
 "if" { currentColumn += 2; return IF; }
 "while" { currentColumn += 5; return WHILE; }
+"func" { currentColumn += 4; return FUNC; }
 
 [a-zA-Z][a-zA-Z0-9]* { currentColumn += yyleng; std::string *str = new std::string; *str = yytext; yylval.strType = str; return ID; }
 
 " " { currentColumn++; }
-(\t|"    ") { return INDENT; }
+(\t|"    ") { if (yyleng != 4 || isNewLine) return INDENT; }
 \n { currentColumn++; isNewLine = true; return NEWLINE; }
 
 <<EOF>> { static int once = 0; if (!once) { once++; return NEWLINE; } return 0; }

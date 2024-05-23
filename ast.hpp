@@ -18,7 +18,8 @@ enum type {
 	t_lines,
 	t_assign,
 	t_if,
-	t_while
+	t_while,
+	t_function
 };
 #define strOfType std::vector<std::string>{ \
 "node", \
@@ -30,12 +31,13 @@ enum type {
 "var", \
 "binary operation", \
 "list", \
-"function", \
+"function call", \
 "line", \
 "lines", \
 "assignment", \
 "if statement", \
 "while statement" \
+"function" \
 }
 
 // Base class for all nodes; will never be used explicitly
@@ -220,8 +222,24 @@ public:
 	std::string Str() override { return std::string(indent, '\t') + "while " + cond->Str() + "\n" + contents.Str(); }
 };
 
+// A function definition
+class Function : public Line {
+public:
+	Lines contents;
+	std::string *name;
+	std::vector<std::string> *args;
+	Function(std::string *name, Line *line, int indent) : name(name), contents(line), Line(indent) { if (contents.contents->size()) contents.contents->back()->indent = indent + 1; isBlock = true; Type = t_function; }
+	Function(std::string *name, std::vector<std::string> *args, Line *line, int indent) : name(name), contents(line), args(args), Line(indent) { if (contents.contents->size()) contents.contents->back()->indent = indent + 1; isBlock = true; Type = t_function; }
+	void AddLine(Line *line, int indent = 0) override { contents.AddLine(line, indent); }
+	std::string Str() override {
+		std::string argStr = "";
+		for (std::string arg : *args) argStr += ", " + arg;
+		return std::string(indent, '\t') + "func " + *name + "(" + argStr.substr(2, argStr.size() - 1) + ")\n" + contents.Str();
+	}
+};
+
 inline Expression *interpretConsts(Expression *expr, Line *thisLine) {
-	if (expr->Type == t_binop && expr->isConst) {
+	if (expr->isBinOp && expr->isConst) {
 		BinOp *binop = (BinOp *)expr;
 		Expression *left = interpretConsts(binop->left, thisLine);
 		Expression *right = interpretConsts(binop->right, thisLine);
@@ -432,8 +450,26 @@ inline Expression *interpretConsts(Expression *expr, Line *thisLine) {
 	}
 	if (expr->isBinOp) {
 		BinOp *binop = (BinOp *)expr;
-		binop->left = interpretConsts(binop->left, thisLine);
-		binop->right = interpretConsts(binop->right, thisLine);
+		Expression *left = interpretConsts(binop->left, thisLine);
+		Expression *right = interpretConsts(binop->right, thisLine);
+
+		if (left->Type != t_var && right->Type != t_var) {
+			std::cout << "\033[0;31mTypeError: \033[0;0mcannot add " << strOfType[left->Type] << " and " << strOfType[right->Type] << "\n";
+			std::cout << thisLine->num << " | " << thisLine->self;
+			exit(1);
+		}
+
+		binop->left = left;
+		binop->right = right;
+	}
+	else if (expr->Type == t_list) {
+		List *list = (List *)expr;
+		for (int i = 0; i < list->contents.size(); i++)
+			list->contents[i] = interpretConsts(list->contents[i], thisLine);
+	}
+	else if (expr->Type == t_func) {
+		Func *func = (Func *)expr;
+		func->val = interpretConsts(func->val, thisLine);
 	}
 	return expr;
 }
